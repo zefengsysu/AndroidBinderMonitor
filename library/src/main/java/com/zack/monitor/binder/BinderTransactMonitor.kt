@@ -7,8 +7,9 @@ object BinderTransactMonitor : IBinderTransactMonitor {
 
     // TODO(zefengwang):
     private val monitorImpl =
-        if (Build.VERSION.SDK_INT >= 29) JavaBinderTransactMonitorApi29(dispatcher)
-        else DummyBinderTransactMonitor
+        JavaBinderTransactMonitor(dispatcher)
+//        if (Build.VERSION.SDK_INT >= 29) JavaBinderTransactMonitorApi29(dispatcher)
+//        else DummyBinderTransactMonitor
 
     override fun enableMonitor(): Boolean {
         return monitorImpl.enableMonitor()

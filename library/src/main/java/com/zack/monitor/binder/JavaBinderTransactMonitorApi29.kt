@@ -60,17 +60,8 @@ class JavaBinderTransactMonitorApi29(
     @GuardedBy("this")
     private var isMonitored = false
 
-    private val originTransactListener: Any? by lazy {
-        if (null == sTransactListenerField) {
-            return@lazy null
-        }
-        try {
-            sTransactListenerField!!.get(null)
-        } catch (e: Exception) {
-            Log.e(TAG, "reflect originTransactListener fail", e)
-            null
-        }
-    }
+    @Volatile
+    private var originTransactListener: Any? = null
     private val newTransactListener: Any? by lazy {
         if (null == proxyTransactListenerClass) {
             return@lazy null
@@ -92,6 +83,7 @@ class JavaBinderTransactMonitorApi29(
             Log.i(TAG, "enableMonitor, sdk version mismatch")
             return false
         }
+        resolveOriginTransactListener()
         if (null == newTransactListener) {
             Log.e(TAG, "enableMonitor, newTransactListener is null")
             return false
@@ -115,7 +107,7 @@ class JavaBinderTransactMonitorApi29(
         }
         Log.i(TAG, "disableMonitor")
         isMonitored = try {
-            sTransactListenerField!!.set(null, originTransactListener!!)
+            sTransactListenerField!!.set(null, originTransactListener)
             false
         } catch (e: Exception) {
             Log.e(TAG, "reflect set originTransactListener fail", e)
@@ -153,6 +145,18 @@ class JavaBinderTransactMonitorApi29(
                 }
             }
         }
-        return null
+        return originTransactListener?.let { method.invoke(it, args) }
+    }
+
+    private fun resolveOriginTransactListener() {
+        if (null == sTransactListenerField) {
+            return
+        }
+        originTransactListener = try {
+            sTransactListenerField!!.get(null)
+        } catch (e: Exception) {
+            Log.e(TAG, "resolveOriginTransactListener, reflect originTransactListener fail", e)
+            null
+        }
     }
 }

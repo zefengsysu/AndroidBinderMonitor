@@ -3,15 +3,13 @@ package com.zack.monitor.binder
 import android.annotation.SuppressLint
 import android.os.Build
 import android.os.IBinder
-import androidx.annotation.GuardedBy
 import java.lang.reflect.Field
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 
-class JavaBinderTransactMonitorApi29(
-    override val dispatcher: BinderTransactDispatcher
-) : IBinderTransactMonitor, InvocationHandler {
+class JavaBinderTransactMonitorApi29(dispatcher: BinderTransactDispatcher)
+    : BaseBinderTransactMonitor(dispatcher), InvocationHandler {
     companion object {
         private const val TAG = "AndroidBinderMonitor.JavaBinderTransactMonitorApi29"
 
@@ -57,9 +55,6 @@ class JavaBinderTransactMonitorApi29(
         }
     }
 
-    @GuardedBy("this")
-    private var isMonitored = false
-
     @Volatile
     private var originTransactListener: Any? = null
     private val newTransactListener: Any? by lazy {
@@ -73,12 +68,7 @@ class JavaBinderTransactMonitorApi29(
         )
     }
 
-    @Synchronized
-    override fun enableMonitor(): Boolean {
-        if (isMonitored) {
-            Log.i(TAG, "enableMonitor, already monitor")
-            return true
-        }
+    override fun doEnableMonitor(): Boolean {
         if (Build.VERSION.SDK_INT < 29) {
             Log.i(TAG, "enableMonitor, sdk version mismatch")
             return false
@@ -88,33 +78,23 @@ class JavaBinderTransactMonitorApi29(
             Log.e(TAG, "enableMonitor, newTransactListener is null")
             return false
         }
-        Log.i(TAG, "enableMonitor")
-        isMonitored = try {
+        return try {
             sTransactListenerField!!.set(null, newTransactListener)
             true
         } catch (e: Exception) {
             Log.e(TAG, "reflect set newTransactListener fail", e)
             false
         }
-        return isMonitored
     }
 
-    @Synchronized
-    override fun disableMonitor(): Boolean {
-        if (!isMonitored) {
-            Log.i(TAG, "disableMonitor, not monitor now")
-            return true
-        }
-        Log.i(TAG, "disableMonitor")
-        isMonitored = try {
+    override fun doDisableMonitor() =
+        try {
             sTransactListenerField!!.set(null, originTransactListener)
             false
         } catch (e: Exception) {
             Log.e(TAG, "reflect set originTransactListener fail", e)
             true
         }
-        return !isMonitored
-    }
 
     override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any? {
         method ?: return null

@@ -9,8 +9,7 @@ cmake_minimum_required(VERSION 3.22.1)
 
 project("binder")
 
-find_package(xdl REQUIRED CONFIG)
-find_package(bytehook REQUIRED CONFIG)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
@@ -26,13 +25,17 @@ add_library( # Sets the name of the library.
         # Provides a relative path to your source file(s).
         jni_bridge.cpp
         hidden_api_bypass.cpp
-        transact_native_hooker.cpp)
+        binder_proxy_transact_native_hooker.cpp
+        bp_binder_transact_hooker.cpp)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
 # default, you only need to specify the name of the public NDK library
 # you want to add. CMake verifies that the library exists before
 # completing its build.
+
+find_package(xdl REQUIRED CONFIG)
+find_package(bytehook REQUIRED CONFIG)
 
 find_library( # Sets the name of the path variable.
         log-lib

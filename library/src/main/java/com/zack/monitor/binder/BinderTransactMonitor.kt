@@ -1,21 +1,31 @@
 package com.zack.monitor.binder
 
-import android.os.Build
-
 object BinderTransactMonitor : IBinderTransactMonitor {
     override val dispatcher = BinderTransactDispatcher()
 
-    // TODO(zefengwang):
-    private val monitorImpl =
-        JavaBinderTransactMonitor(dispatcher)
-//        if (Build.VERSION.SDK_INT >= 29) JavaBinderTransactMonitorApi29(dispatcher)
-//        else DummyBinderTransactMonitor
+    private val monitors = arrayOf<IBinderTransactMonitor>(
+        GeneralBinderTransactMonitor(dispatcher),
+//        JavaBinderTransactMonitor(dispatcher),
+//        JavaBinderTransactMonitorApi29(dispatcher),
+    )
 
     override fun enableMonitor(): Boolean {
-        return monitorImpl.enableMonitor()
+        for (monitor in monitors) {
+            if (!monitor.enableMonitor()) {
+                for (monitor2 in monitors) {
+                    monitor2.disableMonitor()
+                }
+                return false
+            }
+        }
+        return true
     }
 
     override fun disableMonitor(): Boolean {
-        return monitorImpl.disableMonitor()
+        var allDisable = true
+        for (monitor in monitors) {
+            allDisable = allDisable && monitor.disableMonitor()
+        }
+        return allDisable
     }
 }

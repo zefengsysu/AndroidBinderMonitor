@@ -23,12 +23,12 @@ sealed class BinderTransactParams(
         }
     }
 
-    class Native(
+    class General(
         code: Int, flags: Int,
         val descriptor: String?, val dataSize: Int,
     ) : BinderTransactParams(code, flags) {
         override fun toString(): String {
-            return "NativeBinderTransactParams(" +
+            return "GeneralBinderTransactParams(" +
                     "binder=$descriptor, " +
                     "code=$code, flags=$flags, " +
                     "dataSize=$dataSize)"

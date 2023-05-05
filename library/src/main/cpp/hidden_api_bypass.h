@@ -9,7 +9,7 @@
 
 namespace HiddenApiBypass {
 
-bool exemptAll(JavaVM *vm);
+    bool ExemptAll(JavaVM *vm);
 
 } // namespace HiddenApiBypass
 

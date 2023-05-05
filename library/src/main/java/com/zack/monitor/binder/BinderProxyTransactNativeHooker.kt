@@ -5,10 +5,11 @@ import android.os.Parcel
 import androidx.annotation.GuardedBy
 import androidx.annotation.Keep
 
-object TransactNativeHooker {
-    private const val TAG = "AndroidBinderMonitor.TransactNativeHooker"
+object BinderProxyTransactNativeHooker {
+    private const val TAG = "AndroidBinderMonitor.BinderProxyTransactNativeHooker"
 
-    private val isLibLoaded = LibraryLoader.load("binder_monitor")
+    // exemptAll success means lib loaded
+    private val initSuccess = HiddenApiBypass.exemptAll()
 
     @GuardedBy("this")
     private var hasTryHook = false
@@ -20,7 +21,7 @@ object TransactNativeHooker {
         if (hasTryHook) {
             return hookResult
         }
-        if (isLibLoaded) {
+        if (initSuccess) {
             hookResult = nativeHook()
         }
         hasTryHook = true

@@ -68,7 +68,9 @@ class JavaBinderTransactMonitorApi29(dispatcher: BinderTransactDispatcher)
         )
     }
 
-    override fun doEnableMonitor(): Boolean {
+    private var monitorFilter: BinderTransactMonitorFilter? = null
+
+    override fun doEnableMonitor(config: BinderTransactMonitorConfig): Boolean {
         if (Build.VERSION.SDK_INT < 29) {
             Log.i(TAG, "enableMonitor, sdk version mismatch")
             return false
@@ -80,6 +82,7 @@ class JavaBinderTransactMonitorApi29(dispatcher: BinderTransactDispatcher)
         }
         return try {
             sTransactListenerField!!.set(null, newTransactListener)
+            monitorFilter = BinderTransactMonitorFilter(config, this::dispatchTransacted)
             true
         } catch (e: Exception) {
             Log.e(TAG, "reflect set newTransactListener fail", e)
@@ -107,8 +110,9 @@ class JavaBinderTransactMonitorApi29(dispatcher: BinderTransactDispatcher)
                         val transactionCode = args[1] as Int
                         val flags = if (args.size >= 3) args[2] as Int else BinderTransactParams.INVALID_FLAGS
                         val params = BinderTransactParams.Java(transactionCode, flags, binder)
-                        Log.d(TAG, "onTransactStarted, params: $params")
-                        dispatcher.dispatchTransactStart(params)
+//                        Log.d(TAG, "onTransactStarted, params: $params")
+//                        dispatcher.dispatchTransactStart(params)
+                        monitorFilter?.onTransactStart(params)
                     } catch (e: Exception) {
                         Log.e(TAG, "proxy onTransactStarted call fail", e)
                     }
@@ -118,8 +122,9 @@ class JavaBinderTransactMonitorApi29(dispatcher: BinderTransactDispatcher)
             }
             "onTransactEnded" -> {
                 if (args.isNotEmpty()) {
-                    Log.d(TAG, "onTransactEnded")
-                    dispatcher.dispatchTransactEnd()
+//                    Log.d(TAG, "onTransactEnded")
+//                    dispatcher.dispatchTransactEnd()
+                    monitorFilter?.onTransactEnd()
                 } else {
                     Log.e(TAG, "proxy onTransactEnded call, illegal args")
                 }
@@ -138,5 +143,10 @@ class JavaBinderTransactMonitorApi29(dispatcher: BinderTransactDispatcher)
             Log.e(TAG, "resolveOriginTransactListener, reflect originTransactListener fail", e)
             null
         }
+    }
+
+    private fun dispatchTransacted(params: BinderTransactParams, costTimeMs: Long) {
+        Log.d(TAG, "dispatchTransacted, params: $params, costTimeMs: $costTimeMs")
+        dispatcher.dispatchTransacted(params, costTimeMs)
     }
 }

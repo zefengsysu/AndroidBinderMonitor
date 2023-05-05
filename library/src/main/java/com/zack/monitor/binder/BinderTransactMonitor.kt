@@ -9,9 +9,9 @@ object BinderTransactMonitor : IBinderTransactMonitor {
 //        JavaBinderTransactMonitorApi29(dispatcher),
     )
 
-    override fun enableMonitor(): Boolean {
+    override fun enableMonitor(config: BinderTransactMonitorConfig): Boolean {
         for (monitor in monitors) {
-            if (!monitor.enableMonitor()) {
+            if (!monitor.enableMonitor(config)) {
                 for (monitor2 in monitors) {
                     monitor2.disableMonitor()
                 }

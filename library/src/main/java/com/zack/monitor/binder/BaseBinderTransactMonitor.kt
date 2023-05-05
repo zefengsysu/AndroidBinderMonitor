@@ -13,13 +13,13 @@ abstract class BaseBinderTransactMonitor(
     private var isMonitored = false
 
     @Synchronized
-    override fun enableMonitor(): Boolean {
+    override fun enableMonitor(config: BinderTransactMonitorConfig): Boolean {
         if (isMonitored) {
             Log.i(TAG, "enableMonitor, already monitor")
             return true
         }
         Log.i(TAG, "enableMonitor")
-        isMonitored = doEnableMonitor()
+        isMonitored = doEnableMonitor(config)
         return isMonitored
     }
 
@@ -33,6 +33,6 @@ abstract class BaseBinderTransactMonitor(
         return !isMonitored
     }
 
-    protected abstract fun doEnableMonitor(): Boolean
+    protected abstract fun doEnableMonitor(config: BinderTransactMonitorConfig): Boolean
     protected abstract fun doDisableMonitor(): Boolean
 }

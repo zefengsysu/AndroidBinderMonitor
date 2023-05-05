@@ -14,6 +14,8 @@ object BpBinderTransactHooker {
     @GuardedBy("this")
     private var hookResult = false
 
+    private var monitorFilter: BinderTransactMonitorFilter? = null
+
     init {
         val bhookInitRet = ByteHook.init(
             ByteHook.ConfigBuilder()
@@ -28,12 +30,15 @@ object BpBinderTransactHooker {
     }
 
     @Synchronized
-    fun hook(): Boolean {
+    fun hook(config: BinderTransactMonitorConfig): Boolean {
         if (hasTryHook) {
             return hookResult
         }
         if (initSuccess) {
             hookResult = nativeHook()
+            if (hookResult) {
+                monitorFilter = BinderTransactMonitorFilter(config, this::dispatchTransacted)
+            }
         }
         hasTryHook = true
         return hookResult
@@ -59,18 +64,25 @@ object BpBinderTransactHooker {
     private fun onTransactStart(
         descriptor: String?, code: Int, dataSize: Int, flags: Int
     ) {
-        Log.d(TAG, "onTransactStart, " +
-                "binder: $descriptor, " +
-                "code: $code, " +
-                "dataSize: $dataSize, " +
-                "flags: $flags")
+//        Log.d(TAG, "onTransactStart, " +
+//                "binder: $descriptor, " +
+//                "code: $code, " +
+//                "dataSize: $dataSize, " +
+//                "flags: $flags")
         val params = BinderTransactParams.General(code, flags, descriptor, dataSize)
-        BinderTransactDispatchers.dispatchTransactStart(params)
+//        BinderTransactDispatchers.dispatchTransactStart(params)
+        monitorFilter?.onTransactStart(params)
     }
     @Keep
     @JvmStatic
     private fun onTransactEnd() {
-        Log.d(TAG, "onTransactEnd")
-        BinderTransactDispatchers.dispatchTransactEnd()
+//        Log.d(TAG, "onTransactEnd")
+//        BinderTransactDispatchers.dispatchTransactEnd()
+        monitorFilter?.onTransactEnd()
+    }
+
+    private fun dispatchTransacted(params: BinderTransactParams, costTimeMs: Long) {
+        Log.d(TAG, "dispatchTransacted, params: $params, costTimeMs: $costTimeMs")
+        BinderTransactDispatchers.dispatchTransacted(params, costTimeMs)
     }
 }

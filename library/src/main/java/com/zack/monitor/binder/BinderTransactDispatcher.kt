@@ -24,6 +24,11 @@ class BinderTransactDispatcher(private val dispatchExecutor: Executor = Immediat
     fun dispatchTransactEnd() {
         dispatchExecutor.execute { listeners.forEach(IBinderTransactListener::onTransactEnd) }
     }
+    fun dispatchTransacted(params: BinderTransactParams, costTimeMs: Long) {
+        dispatchExecutor.execute {
+            listeners.forEach { listener -> listener.onTransacted(params, costTimeMs) }
+        }
+    }
 }
 
 internal object BinderTransactDispatchers {
@@ -37,5 +42,8 @@ internal object BinderTransactDispatchers {
     }
     fun dispatchTransactEnd() {
         dispatchers.forEach(BinderTransactDispatcher::dispatchTransactEnd)
+    }
+    fun dispatchTransacted(params: BinderTransactParams, costTimeMs: Long) {
+        dispatchers.forEach { dispatcher -> dispatcher.dispatchTransacted(params, costTimeMs) }
     }
 }

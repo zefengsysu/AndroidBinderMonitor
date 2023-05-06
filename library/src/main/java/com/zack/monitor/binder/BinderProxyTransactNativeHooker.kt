@@ -24,12 +24,10 @@ object BinderProxyTransactNativeHooker {
             return hookResult
         }
         if (initSuccess) {
-            // TODO(zefengwang):
-//            hookResult = nativeHook(
-//                config.monitorBlockOnMainThread, config.blockTimeThresholdMs,
-//                config.monitorDataTooLarge, config.dataTooLargeFactor
-//            )
-            hookResult = nativeHook()
+            hookResult = nativeHook(
+                config.monitorBlockOnMainThread, config.blockTimeThresholdMs,
+                config.monitorDataTooLarge, config.dataTooLargeFactor
+            )
             if (hookResult) {
                 monitorFilter = BinderTransactMonitorFilter(config, this::dispatchTransactDataTooLarge, this::dispatchTransactBlock)
             }
@@ -48,13 +46,11 @@ object BinderProxyTransactNativeHooker {
         return !hookResult
     }
 
-    // TODO(zefengwang):
-//    private external fun nativeHook(
-//        monitorBlockOnMainThread: Boolean, blockTimeThresholdMs: Long,
-//        monitorDataTooLarge: Boolean, dataTooLargeFactor: Float
-//    ): Boolean
     @JvmStatic
-    private external fun nativeHook(): Boolean
+    private external fun nativeHook(
+        monitorBlockOnMainThread: Boolean, blockTimeThresholdMs: Long,
+        monitorDataTooLarge: Boolean, dataTooLargeFactor: Float
+    ): Boolean
     @JvmStatic
     private external fun nativeUnhook(): Boolean
 
@@ -87,6 +83,27 @@ object BinderProxyTransactNativeHooker {
 
     private fun dispatchTransactBlock(params: BinderTransactParams, costTotalTimeMs: Long) {
         Log.d(TAG, "dispatchTransactBlock, params: $params, costTotalTimeMs: $costTotalTimeMs")
+        BinderTransactDispatchers.dispatchTransactBlock(params, costTotalTimeMs)
+    }
+
+    @Keep
+    @JvmStatic
+    private fun onTransactDataTooLarge(binder: IBinder, code: Int, data: Parcel?, flags: Int) {
+        val params =
+            BinderTransactParams.Java(code, flags, binder, data)
+                .apply { attachBacktrace(resolveJavaBacktrace()) }
+        Log.d(TAG, "onTransactDataTooLarge, params: $params")
+        BinderTransactDispatchers.dispatchTransactDataTooLarge(params)
+    }
+    @Keep
+    @JvmStatic
+    private fun onTransactBlock(
+        binder: IBinder, code: Int, data: Parcel?, flags: Int, costTotalTimeMs: Long
+    ) {
+        val params =
+            BinderTransactParams.Java(code, flags, binder, data)
+                .apply { attachBacktrace(resolveJavaBacktrace()) }
+        Log.d(TAG, "onTransactBlock, params: $params, costTotalTimeMs: $costTotalTimeMs")
         BinderTransactDispatchers.dispatchTransactBlock(params, costTotalTimeMs)
     }
 }

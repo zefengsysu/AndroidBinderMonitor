@@ -7,7 +7,7 @@
 
 jboolean com_zack_monitor_binder_HiddenApiBypass_nativeExemptAll(JNIEnv *, jclass);
 
-jboolean com_zack_monitor_binder_TransactNativeHooker_nativeHook(JNIEnv *, jclass);
+jboolean com_zack_monitor_binder_TransactNativeHooker_nativeHook(JNIEnv *, jclass, jboolean, jlong, jboolean, jfloat);
 
 jboolean com_zack_monitor_binder_TransactNativeHooker_nativeUnhook(JNIEnv *, jclass);
 
@@ -21,7 +21,7 @@ static const JNINativeMethod g_hidden_api_bypass_methods[] = {
         {"nativeExemptAll", "()Z", (void *) com_zack_monitor_binder_HiddenApiBypass_nativeExemptAll}
 };
 static const JNINativeMethod g_transact_native_hooker_methods[] = {
-        {"nativeHook", "()Z", (void *) com_zack_monitor_binder_TransactNativeHooker_nativeHook},
+        {"nativeHook", "(ZJZF)Z", (void *) com_zack_monitor_binder_TransactNativeHooker_nativeHook},
         {"nativeUnhook", "()Z", (void *) com_zack_monitor_binder_TransactNativeHooker_nativeUnhook}
 };
 static const JNINativeMethod g_transact_hooker_methods[] = {
@@ -54,8 +54,16 @@ jboolean com_zack_monitor_binder_HiddenApiBypass_nativeExemptAll(JNIEnv *, jclas
     return HiddenApiBypass::ExemptAll(g_vm) ? JNI_TRUE : JNI_FALSE;
 }
 
-jboolean com_zack_monitor_binder_TransactNativeHooker_nativeHook(JNIEnv *env, jclass) {
-    return BinderProxyTransactNativeHooker::Hook(env) ? JNI_TRUE : JNI_FALSE;
+jboolean com_zack_monitor_binder_TransactNativeHooker_nativeHook(
+    JNIEnv *env, jclass,
+    jboolean monitor_block_on_main_thread, jlong block_time_threshold_ms,
+    jboolean monitor_data_too_large, jfloat data_too_large_factor
+) {
+    return BinderProxyTransactNativeHooker::Hook(
+        env,
+        JNI_TRUE == monitor_block_on_main_thread, block_time_threshold_ms,
+        JNI_TRUE == monitor_data_too_large, data_too_large_factor
+    ) ? JNI_TRUE : JNI_FALSE;
 }
 
 jboolean com_zack_monitor_binder_TransactNativeHooker_nativeUnhook(JNIEnv *env, jclass) {

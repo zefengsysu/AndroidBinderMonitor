@@ -24,6 +24,7 @@ class BinderTransactMonitorFilter(
     companion object {
         private const val TAG = "AndroidBinderMonitor.BinderTransactMonitorFilter"
     }
+
     private val transactCallStack =
         object : ThreadLocal<Stack<TimeStampedValue<BinderTransactParams>>>() {
         override fun initialValue() = Stack<TimeStampedValue<BinderTransactParams>>()
@@ -60,8 +61,7 @@ class BinderTransactMonitorFilter(
                     )
                     return
                 }
-            }
-            if (costTotalTimeMs >= config.blockTimeThresholdMs) {
+            } else if (costTotalTimeMs >= config.blockTimeThresholdMs) {
                 onTransactBlock(
                     timeStampedParams.value.attachBacktrace(resolveJavaBacktrace()),
                     costTotalTimeMs

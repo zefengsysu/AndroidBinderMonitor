@@ -73,7 +73,7 @@ class JavaBinderTransactMonitorApi29(dispatcher: BinderTransactDispatcher)
     override fun doEnableMonitor(config: BinderTransactMonitorConfig): Boolean {
         if (Build.VERSION.SDK_INT < 29) {
             Log.i(TAG, "enableMonitor, sdk version mismatch")
-            return false
+            return true
         }
         resolveOriginTransactListener()
         if (null == newTransactListener) {

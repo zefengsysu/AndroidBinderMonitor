@@ -11,7 +11,7 @@
 
 #include "log.h"
 
-#define TAG "AndroidBinderMonitor.BinderTransactMonitorFilter"
+#define FILTER_TAG "AndroidBinderMonitor.BinderTransactMonitorFilter"
 
 constexpr int kFlagOneWay = 0x00000001;
 
@@ -46,8 +46,8 @@ private:
 template <class CallInfo>
 class BinderTransactMonitorFilter {
 public:
-    typedef void(*OnTransactDataTooLarge)(CallInfo);
-    typedef void(*OnTransactBlock)(CallInfo, long);
+    typedef void(*OnTransactDataTooLarge)(const CallInfo &);
+    typedef void(*OnTransactBlock)(const CallInfo &, long);
 
 public:
     BinderTransactMonitorFilter(
@@ -73,7 +73,7 @@ public:
     }
     void OnTransactEnd() {
         if (transact_call_stack_.empty()) {
-            LOGE(TAG, "OnTransactEnd, transact call stack is empty");
+            LOGE(FILTER_TAG, "OnTransactEnd, transact call stack is empty");
             return;
         }
         auto call_info = transact_call_stack_.top();

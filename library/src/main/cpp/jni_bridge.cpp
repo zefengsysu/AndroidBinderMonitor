@@ -11,7 +11,7 @@ jboolean com_zack_monitor_binder_TransactNativeHooker_nativeHook(JNIEnv *, jclas
 
 jboolean com_zack_monitor_binder_TransactNativeHooker_nativeUnhook(JNIEnv *, jclass);
 
-jboolean com_zack_monitor_binder_TransactHooker_nativeHook(JNIEnv *, jclass);
+jboolean com_zack_monitor_binder_TransactHooker_nativeHook(JNIEnv *, jclass, jboolean, jlong, jboolean, jfloat);
 
 jboolean com_zack_monitor_binder_TransactHooker_nativeUnhook(JNIEnv *, jclass);
 
@@ -25,11 +25,11 @@ static const JNINativeMethod g_transact_native_hooker_methods[] = {
         {"nativeUnhook", "()Z", (void *) com_zack_monitor_binder_TransactNativeHooker_nativeUnhook}
 };
 static const JNINativeMethod g_transact_hooker_methods[] = {
-        {"nativeHook",   "()Z", (void *) com_zack_monitor_binder_TransactHooker_nativeHook},
+        {"nativeHook",   "(ZJZF)Z", (void *) com_zack_monitor_binder_TransactHooker_nativeHook},
         {"nativeUnhook", "()Z", (void *) com_zack_monitor_binder_TransactHooker_nativeUnhook}
 };
 
-jint JNI_OnLoad(JavaVM *vm, void *reserved) {
+jint JNI_OnLoad(JavaVM *vm, void *) {
     JNIEnv *env = nullptr;
     if (vm->GetEnv((void **) &env, JNI_VERSION_1_4) != JNI_OK) {
         return JNI_ERR;
@@ -70,8 +70,16 @@ jboolean com_zack_monitor_binder_TransactNativeHooker_nativeUnhook(JNIEnv *env, 
     return BinderProxyTransactNativeHooker::Unhook(env) ? JNI_TRUE : JNI_FALSE;
 }
 
-jboolean com_zack_monitor_binder_TransactHooker_nativeHook(JNIEnv *env, jclass) {
-    return BpBinderTransactHooker::Hook(g_vm, env) ? JNI_TRUE : JNI_FALSE;
+jboolean com_zack_monitor_binder_TransactHooker_nativeHook(
+    JNIEnv *env, jclass,
+    jboolean monitor_block_on_main_thread, jlong block_time_threshold_ms,
+    jboolean monitor_data_too_large, jfloat data_too_large_factor
+) {
+    return BpBinderTransactHooker::Hook(
+        g_vm, env,
+        JNI_TRUE == monitor_block_on_main_thread, block_time_threshold_ms,
+        JNI_TRUE == monitor_data_too_large, data_too_large_factor
+    ) ? JNI_TRUE : JNI_FALSE;
 }
 
 jboolean com_zack_monitor_binder_TransactHooker_nativeUnhook(JNIEnv *, jclass) {

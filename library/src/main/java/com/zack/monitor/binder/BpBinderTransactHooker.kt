@@ -1,5 +1,7 @@
 package com.zack.monitor.binder
 
+import android.os.IBinder
+import android.os.Parcel
 import androidx.annotation.GuardedBy
 import androidx.annotation.Keep
 import com.bytedance.android.bytehook.ByteHook
@@ -35,7 +37,10 @@ object BpBinderTransactHooker {
             return hookResult
         }
         if (initSuccess) {
-            hookResult = nativeHook()
+            hookResult = nativeHook(
+                config.monitorBlockOnMainThread, config.blockTimeThresholdMs,
+                config.monitorDataTooLarge, config.dataTooLargeFactor
+            )
             if (hookResult) {
                 monitorFilter = BinderTransactMonitorFilter(config, this::dispatchTransactDataTooLarge, this::dispatchTransactBlock)
             }
@@ -55,7 +60,10 @@ object BpBinderTransactHooker {
     }
 
     @JvmStatic
-    private external fun nativeHook(): Boolean
+    private external fun nativeHook(
+        monitorBlockOnMainThread: Boolean, blockTimeThresholdMs: Long,
+        monitorDataTooLarge: Boolean, dataTooLargeFactor: Float
+    ): Boolean
     @JvmStatic
     private external fun nativeUnhook(): Boolean
 
@@ -88,6 +96,27 @@ object BpBinderTransactHooker {
 
     private fun dispatchTransactBlock(params: BinderTransactParams, costTotalTimeMs: Long) {
         Log.d(TAG, "dispatchTransactBlock, params: $params, costTotalTimeMs: $costTotalTimeMs")
+        BinderTransactDispatchers.dispatchTransactBlock(params, costTotalTimeMs)
+    }
+
+    @Keep
+    @JvmStatic
+    private fun onTransactDataTooLarge(descriptor: String?, code: Int, dataSize: Int, flags: Int) {
+        val params =
+            BinderTransactParams.General(code, flags, descriptor, dataSize)
+                .apply { attachBacktrace(resolveJavaBacktrace()) }
+        Log.d(TAG, "onTransactDataTooLarge, params: $params")
+        BinderTransactDispatchers.dispatchTransactDataTooLarge(params)
+    }
+    @Keep
+    @JvmStatic
+    private fun onTransactBlock(
+        descriptor: String?, code: Int, dataSize: Int, flags: Int, costTotalTimeMs: Long
+    ) {
+        val params =
+            BinderTransactParams.General(code, flags, descriptor, dataSize)
+                .apply { attachBacktrace(resolveJavaBacktrace()) }
+        Log.d(TAG, "onTransactBlock, params: $params, costTotalTimeMs: $costTotalTimeMs")
         BinderTransactDispatchers.dispatchTransactBlock(params, costTotalTimeMs)
     }
 }

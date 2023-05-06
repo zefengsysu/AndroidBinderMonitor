@@ -4,8 +4,8 @@ object BinderTransactMonitor : IBinderTransactMonitor {
     override val dispatcher = BinderTransactDispatcher()
 
     private val monitors = arrayOf<IBinderTransactMonitor>(
-//        GeneralBinderTransactMonitor(dispatcher),
-        JavaBinderTransactMonitor(dispatcher),
+        GeneralBinderTransactMonitor(dispatcher),
+//        JavaBinderTransactMonitor(dispatcher),
 //        JavaBinderTransactMonitorApi29(dispatcher),
     )
 

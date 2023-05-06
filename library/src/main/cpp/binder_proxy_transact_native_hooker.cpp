@@ -47,8 +47,8 @@ jclass g_binder_proxy_class = nullptr;
 TransactNative g_origin_transact_native = nullptr;
 
 jclass g_hooker_class = nullptr;
-jmethodID g_on_transact_start_method = nullptr;
-jmethodID g_on_transact_end_method = nullptr;
+//jmethodID g_on_transact_start_method = nullptr;
+//jmethodID g_on_transact_end_method = nullptr;
 jmethodID g_on_transact_data_too_large_method = nullptr;
 jmethodID g_on_transact_block_method = nullptr;
 
@@ -57,10 +57,10 @@ jmethodID g_data_size_method = nullptr;
 class BinderProxyTransactNativeCallInfo;
 std::unique_ptr<BinderTransactMonitorFilter<BinderProxyTransactNativeCallInfo>> g_monitor_filter = nullptr;
 
-static const JNINativeMethod g_hijacked_binder_proxy_methods[] = {
+const JNINativeMethod g_hijacked_binder_proxy_methods[] = {
         {kTransactNativeName, kTransactNativeSig, (void *) HijackedTransactNative}
 };
-static /*const*/ JNINativeMethod g_origin_binder_proxy_methods[] = {
+/*const*/ JNINativeMethod g_origin_binder_proxy_methods[] = {
         {kTransactNativeName, kTransactNativeSig, (void *) g_origin_transact_native}
 };
 
@@ -72,11 +72,11 @@ public:
         env_(env), obj_(obj), code_(code), data_obj_(data_obj), flags_(flags) {}
 
 public:
-    int Flags() const override {
+    [[nodiscard]] int Flags() const override {
         return flags_;
     }
 
-    int DataSize() const override {
+    [[nodiscard]] int DataSize() const override {
         return env_->CallIntMethod(data_obj_, g_data_size_method);
     }
 
@@ -193,14 +193,14 @@ jboolean HijackedTransactNative(
     return transact_ret;
 }
 
-void onTransactDataTooLarge(BinderProxyTransactNativeCallInfo call_info) {
+void onTransactDataTooLarge(const BinderProxyTransactNativeCallInfo &call_info) {
     call_info.env_->CallStaticVoidMethod(
         g_hooker_class, g_on_transact_data_too_large_method,
         call_info.obj_, call_info.code_, call_info.data_obj_, call_info.flags_
     );
 }
 
-void onTransactBlock(BinderProxyTransactNativeCallInfo call_info, long cost_total_time_ms) {
+void onTransactBlock(const BinderProxyTransactNativeCallInfo &call_info, long cost_total_time_ms) {
     call_info.env_->CallStaticVoidMethod(
         g_hooker_class, g_on_transact_block_method,
         call_info.obj_, call_info.code_, call_info.data_obj_, call_info.flags_,

@@ -103,6 +103,12 @@ bool InitIfNeed(JNIEnv *env) {
     g_get_method_shorty = (GetMethodShorty) xdl_dsym(*art_handle,
                                                      "_ZN3artL15GetMethodShortyEP7_JNIEnvP10_jmethodID",
                                                      nullptr);
+    // Android 13 Emulator: _ZN3artL15GetMethodShortyEP7_JNIEnvP10_jmethodID.__uniq.224004613612541769487030999398936232930
+    if (nullptr == g_get_method_shorty) {
+        g_get_method_shorty = (GetMethodShorty) xdl_dsym(*art_handle,
+                                                         "_ZN3artL15GetMethodShortyEP7_JNIEnvP10_jmethodID.__uniq.224004613612541769487030999398936232930",
+                                                         nullptr);
+    }
     if (nullptr == g_get_method_shorty) {
         LOGE(TAG, "dlsym GetMethodShorty fail");
         return g_init_success;
@@ -110,6 +116,12 @@ bool InitIfNeed(JNIEnv *env) {
     g_get_native_method_count = (GetNativeMethodCount) xdl_dsym(*art_handle,
                                                                 "_ZN3artL20GetNativeMethodCountEP7_JNIEnvP7_jclass",
                                                                 nullptr);
+    // Android 13 Emulator: _ZN3artL20GetNativeMethodCountEP7_JNIEnvP7_jclass.__uniq.224004613612541769487030999398936232930
+    if (nullptr == g_get_native_method_count) {
+        g_get_native_method_count = (GetNativeMethodCount) xdl_dsym(*art_handle,
+                                                                    "_ZN3artL20GetNativeMethodCountEP7_JNIEnvP7_jclass.__uniq.224004613612541769487030999398936232930",
+                                                                    nullptr);
+    }
     if (nullptr == g_get_native_method_count) {
         LOGE(TAG, "dlsym GetNativeMethodCount fail");
         return g_init_success;
@@ -117,6 +129,12 @@ bool InitIfNeed(JNIEnv *env) {
     g_get_native_methods = (GetNativeMethods) xdl_dsym(*art_handle,
                                                        "_ZN3artL16GetNativeMethodsEP7_JNIEnvP7_jclassP15JNINativeMethodj",
                                                        nullptr);
+    // Android 13: _ZN3artL16GetNativeMethodsEP7_JNIEnvP7_jclassP15JNINativeMethodj.__uniq.224004613612541769487030999398936232930
+    if (nullptr == g_get_native_methods) {
+        g_get_native_methods = (GetNativeMethods) xdl_dsym(*art_handle,
+                                                           "_ZN3artL16GetNativeMethodsEP7_JNIEnvP7_jclassP15JNINativeMethodj.__uniq.224004613612541769487030999398936232930",
+                                                           nullptr);
+    }
     if (nullptr == g_get_native_methods) {
         LOGE(TAG, "dlsym GetNativeMethods fail");
         return g_init_success;

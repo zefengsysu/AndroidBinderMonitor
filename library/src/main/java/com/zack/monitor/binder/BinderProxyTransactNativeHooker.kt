@@ -8,8 +8,7 @@ import androidx.annotation.Keep
 object BinderProxyTransactNativeHooker {
     private const val TAG = "AndroidBinderMonitor.BinderProxyTransactNativeHooker"
 
-    // exemptAll success means lib loaded
-    private val initSuccess = HiddenApiBypass.exemptAll()
+    private val initSuccess: Boolean
 
     @GuardedBy("this")
     private var hasTryHook = false
@@ -17,6 +16,14 @@ object BinderProxyTransactNativeHooker {
     private var hookResult = false
 
     private var monitorFilter: BinderTransactMonitorFilter? = null
+
+    init {
+        val exemptSuccess = HiddenApiBypass.exemptAll()
+        initSuccess =
+            if (exemptSuccess) LibraryLoader.load("binder_monitor")
+            else false
+        Log.i(TAG, "<cinit>, exemptSuccess: $exemptSuccess, initSuccess: $initSuccess")
+    }
 
     @Synchronized
     fun hook(config: BinderTransactMonitorConfig): Boolean {

@@ -24,9 +24,14 @@ object BinderProxyTransactNativeHooker {
             return hookResult
         }
         if (initSuccess) {
+            // TODO(zefengwang):
+//            hookResult = nativeHook(
+//                config.monitorBlockOnMainThread, config.blockTimeThresholdMs,
+//                config.monitorDataTooLarge, config.dataTooLargeFactor
+//            )
             hookResult = nativeHook()
             if (hookResult) {
-                monitorFilter = BinderTransactMonitorFilter(config, this::dispatchTransacted)
+                monitorFilter = BinderTransactMonitorFilter(config, this::dispatchTransactDataTooLarge, this::dispatchTransactBlock)
             }
         }
         hasTryHook = true
@@ -43,6 +48,11 @@ object BinderProxyTransactNativeHooker {
         return !hookResult
     }
 
+    // TODO(zefengwang):
+//    private external fun nativeHook(
+//        monitorBlockOnMainThread: Boolean, blockTimeThresholdMs: Long,
+//        monitorDataTooLarge: Boolean, dataTooLargeFactor: Float
+//    ): Boolean
     @JvmStatic
     private external fun nativeHook(): Boolean
     @JvmStatic
@@ -70,8 +80,13 @@ object BinderProxyTransactNativeHooker {
         monitorFilter?.onTransactEnd()
     }
 
-    private fun dispatchTransacted(params: BinderTransactParams, costTimeMs: Long) {
-        Log.d(TAG, "dispatchTransacted, params: $params, costTimeMs: $costTimeMs")
-        BinderTransactDispatchers.dispatchTransacted(params, costTimeMs)
+    private fun dispatchTransactDataTooLarge(params: BinderTransactParams) {
+        Log.d(TAG, "dispatchTransactDataTooLarge, params: $params")
+        BinderTransactDispatchers.dispatchTransactDataTooLarge(params)
+    }
+
+    private fun dispatchTransactBlock(params: BinderTransactParams, costTotalTimeMs: Long) {
+        Log.d(TAG, "dispatchTransactBlock, params: $params, costTotalTimeMs: $costTotalTimeMs")
+        BinderTransactDispatchers.dispatchTransactBlock(params, costTotalTimeMs)
     }
 }

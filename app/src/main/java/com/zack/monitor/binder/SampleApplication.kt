@@ -9,7 +9,7 @@ class SampleApplication : Application() {
 
         BinderTransactMonitor.enableMonitor(
             BinderTransactMonitorConfig(
-                blockTimeThresholdMs = 4L,
+                blockTimeThresholdMs = 16L,
                 dataTooLargeFactor = 0.1f
             )
         )

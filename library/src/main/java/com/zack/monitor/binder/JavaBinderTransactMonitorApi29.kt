@@ -82,7 +82,7 @@ class JavaBinderTransactMonitorApi29(dispatcher: BinderTransactDispatcher)
         }
         return try {
             sTransactListenerField!!.set(null, newTransactListener)
-            monitorFilter = BinderTransactMonitorFilter(config, this::dispatchTransacted)
+            monitorFilter = BinderTransactMonitorFilter(config, this::dispatchTransactDataTooLarge, this::dispatchTransactBlock)
             true
         } catch (e: Exception) {
             Log.e(TAG, "reflect set newTransactListener fail", e)
@@ -145,8 +145,13 @@ class JavaBinderTransactMonitorApi29(dispatcher: BinderTransactDispatcher)
         }
     }
 
-    private fun dispatchTransacted(params: BinderTransactParams, costTimeMs: Long) {
-        Log.d(TAG, "dispatchTransacted, params: $params, costTimeMs: $costTimeMs")
-        dispatcher.dispatchTransacted(params, costTimeMs)
+    private fun dispatchTransactDataTooLarge(params: BinderTransactParams) {
+        Log.d(TAG, "dispatchTransactDataTooLarge, params: $params")
+        dispatcher.dispatchTransactDataTooLarge(params)
+    }
+
+    private fun dispatchTransactBlock(params: BinderTransactParams, costTotalTimeMs: Long) {
+        Log.d(TAG, "dispatchTransactBlock, params: $params, costTotalTimeMs: $costTotalTimeMs")
+        dispatcher.dispatchTransactBlock(params, costTotalTimeMs)
     }
 }

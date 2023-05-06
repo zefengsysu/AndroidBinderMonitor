@@ -37,7 +37,7 @@ object BpBinderTransactHooker {
         if (initSuccess) {
             hookResult = nativeHook()
             if (hookResult) {
-                monitorFilter = BinderTransactMonitorFilter(config, this::dispatchTransacted)
+                monitorFilter = BinderTransactMonitorFilter(config, this::dispatchTransactDataTooLarge, this::dispatchTransactBlock)
             }
         }
         hasTryHook = true
@@ -81,8 +81,13 @@ object BpBinderTransactHooker {
         monitorFilter?.onTransactEnd()
     }
 
-    private fun dispatchTransacted(params: BinderTransactParams, costTimeMs: Long) {
-        Log.d(TAG, "dispatchTransacted, params: $params, costTimeMs: $costTimeMs")
-        BinderTransactDispatchers.dispatchTransacted(params, costTimeMs)
+    private fun dispatchTransactDataTooLarge(params: BinderTransactParams) {
+        Log.d(TAG, "dispatchTransactDataTooLarge, params: $params")
+        BinderTransactDispatchers.dispatchTransactDataTooLarge(params)
+    }
+
+    private fun dispatchTransactBlock(params: BinderTransactParams, costTotalTimeMs: Long) {
+        Log.d(TAG, "dispatchTransactBlock, params: $params, costTotalTimeMs: $costTotalTimeMs")
+        BinderTransactDispatchers.dispatchTransactBlock(params, costTotalTimeMs)
     }
 }

@@ -5,17 +5,21 @@ import android.os.Looper
 import android.os.SystemClock
 import java.util.*
 
-typealias OnTransacted = (BinderTransactParams, Long) -> Unit
+typealias OnTransactDataTooLarge = (BinderTransactParams) -> Unit
+typealias OnTransactBlock = (BinderTransactParams, Long) -> Unit
 
 private class TimeStampedValue<T>(val value: T) {
-    val createTimeMs = SystemClock.elapsedRealtime()
+    val createTotalTimeMs = SystemClock.elapsedRealtime()
+    val createSelfTimeMs = SystemClock.currentThreadTimeMillis()
 
-    fun timeSinceCreate() = SystemClock.elapsedRealtime() - createTimeMs
+    fun totalTimeSinceCreate() = SystemClock.elapsedRealtime() - createTotalTimeMs
+    fun selfTimeSinceCreate() = SystemClock.currentThreadTimeMillis() - createSelfTimeMs
 }
 
 class BinderTransactMonitorFilter(
     private val config: BinderTransactMonitorConfig,
-    private val onTransacted: OnTransacted
+    private val onTransactDataTooLarge: OnTransactDataTooLarge,
+    private val onTransactBlock: OnTransactBlock
 ) {
     companion object {
         private const val TAG = "AndroidBinderMonitor.BinderTransactMonitorFilter"
@@ -26,6 +30,15 @@ class BinderTransactMonitorFilter(
     }
 
     fun onTransactStart(params: BinderTransactParams) {
+        if (config.monitorDataTooLarge) {
+            val isAsyncIPC = 0 != params.flags and Binder.FLAG_ONEWAY
+            val threshold =
+                if (isAsyncIPC) BinderTransactMonitorConfig.ASYNC_IPC_DATA_SIZE_THRESHOLD
+                else BinderTransactMonitorConfig.SYNC_IPC_DATA_SIZE_THRESHOLD
+            if (params.dataSize() >= config.dataTooLargeFactor * threshold) {
+                onTransactDataTooLarge(params.attachBacktrace(resolveJavaBacktrace()))
+            }
+        }
         transactCallStack.get()!!.push(TimeStampedValue(params))
     }
 
@@ -36,40 +49,22 @@ class BinderTransactMonitorFilter(
             return
         }
         val timeStampedParams = myCallStack.pop()
-        val isAsyncIPC = 0 != timeStampedParams.value.flags and Binder.FLAG_ONEWAY
-        val costTimeMs = timeStampedParams.timeSinceCreate()
         if (config.monitorBlockOnMainThread && isMainThread()) {
+            val costTotalTimeMs = timeStampedParams.totalTimeSinceCreate()
             if (BinderTransactMonitorConfig.BLOCK_TIME_THRESHOLD_SYNC_AS_BLOCK == config.blockTimeThresholdMs) {
+                val isAsyncIPC = 0 != timeStampedParams.value.flags and Binder.FLAG_ONEWAY
                 if (!isAsyncIPC) {
-                    onTransacted(
-                        timeStampedParams.value.attachBacktrace(
-                            Thread.currentThread().stackTrace.joinToString(separator = "\n") { it.toString() }
-                        ),
-                        costTimeMs
+                    onTransactBlock(
+                        timeStampedParams.value.attachBacktrace(resolveJavaBacktrace()),
+                        costTotalTimeMs
                     )
                     return
                 }
             }
-            if (costTimeMs >= config.blockTimeThresholdMs) {
-                onTransacted(
-                    timeStampedParams.value.attachBacktrace(
-                        Thread.currentThread().stackTrace.joinToString(separator = "\n") { it.toString() }
-                    ),
-                    costTimeMs
-                )
-                return
-            }
-        }
-        if (config.monitorDataTooLarge) {
-            val threshold =
-                if (isAsyncIPC) BinderTransactMonitorConfig.ASYNC_IPC_DATA_SIZE_THRESHOLD
-                else BinderTransactMonitorConfig.SYNC_IPC_DATA_SIZE_THRESHOLD
-            if (timeStampedParams.value.dataSize() >= config.dataTooLargeFactor * threshold) {
-                onTransacted(
-                    timeStampedParams.value.attachBacktrace(
-                        Thread.currentThread().stackTrace.joinToString(separator = "\n") { it.toString() }
-                    ),
-                    costTimeMs
+            if (costTotalTimeMs >= config.blockTimeThresholdMs) {
+                onTransactBlock(
+                    timeStampedParams.value.attachBacktrace(resolveJavaBacktrace()),
+                    costTotalTimeMs
                 )
                 return
             }

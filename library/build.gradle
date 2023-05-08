@@ -15,7 +15,8 @@ android {
         consumerProguardFiles "consumer-rules.pro"
         externalNativeBuild {
             cmake {
-                cppFlags "-std=c++17"
+                arguments '-DANDROID_STL=c++_shared'
+                cppFlags "-std=c++17 -Oz -fvisibility=hidden"
             }
         }
         ndk {

@@ -264,3 +264,10 @@ bool BinderProxyTransactNativeHooker::Unhook(JNIEnv *env) {
     g_monitor_filter = nullptr;
     return true;
 }
+
+bool BinderProxyTransactNativeHooker::InTransactNative() {
+    if (nullptr == g_monitor_filter) {
+        return false;
+    }
+    return g_monitor_filter->InTransact();
+}

@@ -17,6 +17,8 @@ namespace BinderProxyTransactNativeHooker {
 
     bool Unhook(JNIEnv *env);
 
+    bool InTransactNative();
+
 } // namespace TransactNativeHooker
 
 #endif //ANDROIDBINDERMONITOR_BINDER_PROXY_TRANSACT_NATIVE_HOOKER_H

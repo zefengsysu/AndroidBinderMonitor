@@ -7,12 +7,17 @@
 
 #include <jni.h>
 
+typedef bool(*SkipTransactFn)();
+
 namespace BpBinderTransactHooker {
+
+    bool NeverSkipTransact();
 
     bool Hook(
         JavaVM *vm, JNIEnv *env,
         bool monitor_block_on_main_thread, long block_time_threshold_ms,
-        bool monitor_data_too_large, float data_too_large_factor
+        bool monitor_data_too_large, float data_too_large_factor,
+        SkipTransactFn skip_transact_fn = NeverSkipTransact
     );
 
     bool Unhook();

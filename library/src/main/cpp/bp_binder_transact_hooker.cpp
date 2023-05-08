@@ -70,6 +70,8 @@ jclass g_hooker_class = nullptr;
 jmethodID g_on_transact_data_too_large_method = nullptr;
 jmethodID g_on_transact_block_method = nullptr;
 
+SkipTransactFn g_skip_transact_fn = BpBinderTransactHooker::NeverSkipTransact;
+
 class BpBinderTransactCallInfo;
 std::unique_ptr<BinderTransactMonitorFilter<BpBinderTransactCallInfo>> g_monitor_filter = nullptr;
 
@@ -173,12 +175,16 @@ status_t HijackedTransact(
 //        auto data_size = g_parcel_data_size(&data);
 //        env->CallStaticVoidMethod(g_hooker_class, g_on_transact_start_method, j_descriptor, code, data_size, flags);
 //    }
-    g_monitor_filter->OnTransactStart({thiz, code, data, flags});
+    if (!g_skip_transact_fn()) {
+        g_monitor_filter->OnTransactStart({thiz, code, data, flags});
+    }
     auto transact_ret = BYTEHOOK_CALL_PREV(HijackedTransact, thiz, code, data, reply, flags);
 //    if (nullptr != env) {
 //        env->CallStaticVoidMethod(g_hooker_class, g_on_transact_end_method);
 //    }
-    g_monitor_filter->OnTransactEnd();
+    if (!g_skip_transact_fn()) {
+        g_monitor_filter->OnTransactEnd();
+    }
     return transact_ret;
 }
 
@@ -224,13 +230,21 @@ void onTransactBlock(const BpBinderTransactCallInfo &call_info, long cost_total_
 
 } // namespace anon
 
+bool BpBinderTransactHooker::NeverSkipTransact() {
+    return false;
+}
+
 bool BpBinderTransactHooker::Hook(
     JavaVM *vm, JNIEnv *env,
     bool monitor_block_on_main_thread, long block_time_threshold_ms,
-    bool monitor_data_too_large, float data_too_large_factor
+    bool monitor_data_too_large, float data_too_large_factor,
+    SkipTransactFn skip_transact_fn
 ) {
     if (!InitIfNeed(vm, env)) {
         return false;
+    }
+    if (nullptr != skip_transact_fn) {
+        g_skip_transact_fn = skip_transact_fn;
     }
     g_monitor_filter = std::make_unique<BinderTransactMonitorFilter<BpBinderTransactCallInfo>>(
             monitor_block_on_main_thread, block_time_threshold_ms,

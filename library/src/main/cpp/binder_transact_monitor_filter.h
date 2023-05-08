@@ -93,6 +93,11 @@ public:
         }
     }
 
+public:
+    bool InTransact() {
+        return !transact_call_stack_.empty();
+    }
+
 private:
     bool IsMainThread() {
         return getpid() == gettid();

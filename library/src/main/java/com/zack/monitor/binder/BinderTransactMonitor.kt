@@ -5,7 +5,10 @@ object BinderTransactMonitor : IBinderTransactMonitor {
 
     private val monitors = arrayOf<IBinderTransactMonitor>(
 //        GeneralBinderTransactMonitor(dispatcher),
+
         JavaBinderTransactMonitor(dispatcher),
+        NativeBinderTransactMonitor(dispatcher),
+
 //        JavaBinderTransactMonitorApi29(dispatcher),
     )
 

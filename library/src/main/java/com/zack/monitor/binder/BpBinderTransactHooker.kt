@@ -30,14 +30,15 @@ object BpBinderTransactHooker {
     }
 
     @Synchronized
-    fun hook(config: BinderTransactMonitorConfig): Boolean {
+    fun hook(config: BinderTransactMonitorConfig, skipTransactNative: Boolean): Boolean {
         if (hasTryHook) {
             return hookResult
         }
         if (initSuccess) {
             hookResult = nativeHook(
                 config.monitorBlockOnMainThread, config.blockTimeThresholdMs,
-                config.monitorDataTooLarge, config.dataTooLargeFactor
+                config.monitorDataTooLarge, config.dataTooLargeFactor,
+                skipTransactNative
             )
             if (hookResult) {
                 monitorFilter = BinderTransactMonitorFilter(config, this::dispatchTransactDataTooLarge, this::dispatchTransactBlock)
@@ -60,7 +61,8 @@ object BpBinderTransactHooker {
     @JvmStatic
     private external fun nativeHook(
         monitorBlockOnMainThread: Boolean, blockTimeThresholdMs: Long,
-        monitorDataTooLarge: Boolean, dataTooLargeFactor: Float
+        monitorDataTooLarge: Boolean, dataTooLargeFactor: Float,
+        skipTransactNative: Boolean
     ): Boolean
     @JvmStatic
     private external fun nativeUnhook(): Boolean

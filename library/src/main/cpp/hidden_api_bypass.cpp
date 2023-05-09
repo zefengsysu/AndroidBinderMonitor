@@ -7,6 +7,7 @@
 #include <future>
 
 #include "log.h"
+#include "utils.h"
 
 #define TAG "AndroidBinderMonitor.HiddenApiBypass"
 
@@ -42,11 +43,11 @@ bool HiddenApiBypass::ExemptAll(JavaVM *vm) {
             return false;
         }
         auto string_class = env->FindClass("java/lang/String");
-        auto prefixes = env->NewObjectArray(1, string_class, nullptr);
-        auto generic_prefix = env->NewStringUTF("L");
-        env->SetObjectArrayElement(prefixes, 0, generic_prefix);
+        ScopedLocalRef<jobjectArray> prefixes{env, env->NewObjectArray(1, string_class, nullptr)};
+        ScopedLocalRef<jstring> generic_prefix{env, env->NewStringUTF("L")};
+        env->SetObjectArrayElement(*prefixes, 0, *generic_prefix);
         // pass nullptr runtime is also ok
-        env->CallVoidMethod(runtime, exempt_method, prefixes);
+        env->CallVoidMethod(runtime, exempt_method, *prefixes);
         return true;
     }, vm);
     return exempt_all_future.get();

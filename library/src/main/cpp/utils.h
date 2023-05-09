@@ -5,6 +5,8 @@
 #ifndef ANDROIDBINDERMONITOR_UTILS_H
 #define ANDROIDBINDERMONITOR_UTILS_H
 
+#include <jni.h>
+
 #include "xdl.h"
 
 class XDLHandle {
@@ -24,6 +26,26 @@ public:
 
 private:
     void *lib_handle_;
+};
+
+template <class JNIType>
+class ScopedLocalRef {
+public:
+    ScopedLocalRef(JNIEnv *env, JNIType ref) : env_(env), ref_(ref) {}
+    ~ScopedLocalRef() {
+        if (nullptr != ref_) {
+            env_->DeleteLocalRef(ref_);
+        }
+    }
+
+public:
+    JNIType operator*() {
+        return ref_;
+    }
+
+private:
+    JNIEnv *env_;
+    JNIType ref_;
 };
 
 #endif //ANDROIDBINDERMONITOR_UTILS_H

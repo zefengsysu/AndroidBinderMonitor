@@ -205,10 +205,10 @@ void onTransactDataTooLarge(const BpBinderTransactCallInfo &call_info) {
     }
     auto descriptor_content = call_info.descriptor_->string();
     auto descriptor_len = g_string16_size(call_info.descriptor_);
-    auto j_descriptor = env->NewString((const jchar *) descriptor_content, (jsize) descriptor_len);
+    ScopedLocalRef<jstring> j_descriptor{env, env->NewString((const jchar *) descriptor_content, (jsize) descriptor_len)};
     env->CallStaticVoidMethod(
         g_hooker_class, g_on_transact_data_too_large_method,
-        j_descriptor, call_info.code_, call_info.data_size_, call_info.flags_
+        *j_descriptor, call_info.code_, call_info.data_size_, call_info.flags_
     );
 }
 
@@ -220,10 +220,10 @@ void onTransactBlock(const BpBinderTransactCallInfo &call_info, long cost_total_
     }
     auto descriptor_content = call_info.descriptor_->string();
     auto descriptor_len = g_string16_size(call_info.descriptor_);
-    auto j_descriptor = env->NewString((const jchar *) descriptor_content, (jsize) descriptor_len);
+    ScopedLocalRef<jstring> j_descriptor{env, env->NewString((const jchar *) descriptor_content, (jsize) descriptor_len)};
     env->CallStaticVoidMethod(
         g_hooker_class, g_on_transact_block_method,
-        j_descriptor, call_info.code_, call_info.data_size_, call_info.flags_,
+        *j_descriptor, call_info.code_, call_info.data_size_, call_info.flags_,
         cost_total_time_ms
     );
 }

@@ -116,6 +116,8 @@ bool InitIfNeed(JNIEnv *env) {
     g_get_native_method_count = (GetNativeMethodCount) xdl_dsym(*art_handle,
                                                                 "_ZN3artL20GetNativeMethodCountEP7_JNIEnvP7_jclass",
                                                                 nullptr);
+    // TODO(zefengwang): see https://github.com/hexhacking/xDL/commit/83767368c15a0286dc03c37d230072a366370176,
+    //  remove this ugly adapt logic after xDL release new version
     // Android 13 Emulator: _ZN3artL20GetNativeMethodCountEP7_JNIEnvP7_jclass.__uniq.224004613612541769487030999398936232930
     if (nullptr == g_get_native_method_count) {
         g_get_native_method_count = (GetNativeMethodCount) xdl_dsym(*art_handle,
@@ -129,6 +131,7 @@ bool InitIfNeed(JNIEnv *env) {
     g_get_native_methods = (GetNativeMethods) xdl_dsym(*art_handle,
                                                        "_ZN3artL16GetNativeMethodsEP7_JNIEnvP7_jclassP15JNINativeMethodj",
                                                        nullptr);
+    // remove this ugly adapt logic after xDL release new version
     // Android 13: _ZN3artL16GetNativeMethodsEP7_JNIEnvP7_jclassP15JNINativeMethodj.__uniq.224004613612541769487030999398936232930
     if (nullptr == g_get_native_methods) {
         g_get_native_methods = (GetNativeMethods) xdl_dsym(*art_handle,
